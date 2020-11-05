@@ -68,6 +68,9 @@ router.get("/getDetails", authguard, async (req, res, next) => {
  * url : /updateDetails
  */
 router.put("/updateDetails/:id", authguard, async (req, res, next) => {
+  if (req.params.id != req.authUserData.id) {
+    return res.json({ message: "cannot update another user details" });
+  }
   let data = await db.any("SELECT * FROM alluser WHERE id = $1", req.params.id);
   if (!data.length) {
     return res.json({ message: "data to update no found" });
@@ -91,10 +94,12 @@ router.put("/updateDetails/:id", authguard, async (req, res, next) => {
 router.post("/addMember", authguard, async (req, res, next) => {
   let addedBy = req.authUserData.id;
   await db.any(
-    "INSERT INTO members(firstname , lastname , email , addedBy) VALUES($<firstname> , $<lastname>, $<email> , $<addedby>);",
+    "INSERT INTO members(firstname , lastname , address , phone, email , addedBy) VALUES($<firstname> , $<lastname>, $<address>, $<phone>, $<email> , $<addedby>);",
     {
       firstname: req.body.firstname,
       lastname: req.body.lastname,
+      address: req.body.address,
+      phone: req.body.phone,
       email: req.body.email,
       addedby: addedBy,
     }
@@ -120,10 +125,12 @@ router.put("/updateMember/:id", authguard, async (req, res, next) => {
   let dataToUpdate = {
     firstname: req.body.firstname ? req.body.firstname : data.firstname,
     lastname: req.body.lastname ? req.body.lastname : data.lastname,
+    address: req.body.address ? req.body.address : data.address,
+    phone: req.body.phone ? req.body.phone : data.phone,
     email: req.body.email ? req.body.email : data.email,
   };
   await db.any(
-    "UPDATE members SET firstname = $<firstname> , lastname = $<lastname> , email = $<email>",
+    "UPDATE members SET firstname = $<firstname> , lastname = $<lastname> , address = $<address> , phone = $<phone>, email = $<email>",
     dataToUpdate
   );
   res.json({ message: "updated successfully", error: null });
